@@ -1,12 +1,13 @@
 repositories {
     mavenCentral()
-    maven { url 'https://repo.dairy.foundation/releases/'}
+    maven { url 'https://repo.dairy.foundation/releases/' }
     google() // Needed for androidx
 }
 
 dependencies {
     implementation 'org.firstinspires.ftc:Inspection:12.0.0'
     implementation 'org.firstinspires.ftc:Blocks:12.0.0'
+    //noinspection Aligned16KB
     implementation 'org.firstinspires.ftc:RobotCore:12.0.0'
     implementation 'org.firstinspires.ftc:RobotServer:12.0.0'
     implementation 'org.firstinspires.ftc:OnBotJava:12.0.0'
@@ -17,4 +18,6 @@ dependencies {
 
     implementation 'com.pedropathing:revhub:3.0.1'
     implementation 'com.pedropathing:tuning:1.0.1'
+
+    implementation 'com.bylazar.sloth:fullpanels:0.3.2+1.0.13'
 }
