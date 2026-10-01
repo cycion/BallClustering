@@ -6,6 +6,7 @@ import com.pedropathing.math.Pose;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 
+import org.firstinspires.ftc.teamcode.algorithm.ClusterScoring;
 import org.firstinspires.ftc.teamcode.algorithm.LLPoseMapper;
 import org.firstinspires.ftc.teamcode.config.DetectionLabels;
 
@@ -14,81 +15,53 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * ClustersMap is a data structure to map detected objects into clusters using DBSCAN.
+ * DbscanClusterer is a data structure to map detected objects into clusters using DBSCAN.
  */
-/*
-I wish Java had a library for this.
- */
+// I wish Java had a library for this
 @Configurable
-public class ClustersMap {
+public class DbscanClusterer {
+    // better name would be "Clusterfuck"
+    /**
+     * Epsilon is the maximum distance between two points for them to be considered neighbors
+     * in inches.
+     */
     @Sorter(sort = 0)
-    public static double defaultEps = 6.0;
+    public static double eps = 6.0;
 
+    /**
+     * MinSamples is the minimum number of points in a neighborhood for a point to be considered
+     */
     @Sorter(sort = 1)
-    public static int defaultMinSamples = 1;
+    public static int minSamples = 1;
 
-    private double eps;
-    private int minSamples;
-    private List<Cluster> clusters;
+    /**
+     * clustersMap stores the clusters
+     */
+    public final List<Cluster> clustersMap;
 
-    public ClustersMap() {
-        this(defaultEps, defaultMinSamples);
+    public DbscanClusterer(LLResult llResult) {
+        this(llResult, new Pose(0, 0, 0), 0.0);
     }
 
-    public ClustersMap(double eps, int minSamples) {
-        this.eps = eps;
-        this.minSamples = minSamples;
-        this.clusters = new ArrayList<>();
+    public DbscanClusterer(LLResult llResult, Pose robotPose, double turretAngle) {
+        this(llResult.getDetectorResults(), robotPose, turretAngle);
+    }
+
+    public DbscanClusterer(List<LLResultTypes.DetectorResult> detectorResults) {
+        this(detectorResults, new Pose(0, 0, 0), 0.0);
     }
 
     /**
-     * Clusters the detected balls in an LLResult using DBSCAN with default robot pose (0, 0, 0) and turret angle 0.
-     *
-     * @param llResult Limelight result containing detector results.
-     * @return List of generated Clusters.
+     * This constructor processes Limelight Detector Result
+     * and sort the detected objects into clusters using DBSCAN.
+     * @param detectorResults Limelight Detector Result
+     * @param robotPose Current Pedro Pose of the robot
+     * @param turretAngle Current turret angle
      */
-    public List<Cluster> cluster(LLResult llResult) {
-        return cluster(llResult, new Pose(0, 0, 0), 0.0);
-    }
-
-    /**
-     * Clusters the detected balls in an LLResult using DBSCAN given the robot pose and turret angle.
-     *
-     * @param llResult Limelight result containing detector results.
-     * @param robotPose Current Pedro Pathing robot Pose.
-     * @param turretAngle Current turret angle in radians.
-     * @return List of generated Clusters.
-     */
-    public List<Cluster> cluster(LLResult llResult, Pose robotPose, double turretAngle) {
-        if (llResult == null) {
-            this.clusters = new ArrayList<>();
-            return this.clusters;
-        }
-        return cluster(llResult.getDetectorResults(), robotPose, turretAngle);
-    }
-
-    /**
-     * Clusters a list of DetectorResults using DBSCAN with default robot pose (0, 0, 0) and turret angle 0.
-     *
-     * @param detectorResults List of detector results from Limelight.
-     * @return List of generated Clusters.
-     */
-    public List<Cluster> cluster(List<LLResultTypes.DetectorResult> detectorResults) {
-        return cluster(detectorResults, new Pose(0, 0, 0), 0.0);
-    }
-
-    /**
-     * Clusters a list of DetectorResults using DBSCAN given the robot pose and turret angle.
-     *
-     * @param detectorResults List of detector results from Limelight.
-     * @param robotPose Current Pedro Pathing robot Pose.
-     * @param turretAngle Current turret angle in radians.
-     * @return List of generated Clusters.
-     */
-    public List<Cluster> cluster(List<LLResultTypes.DetectorResult> detectorResults, Pose robotPose, double turretAngle) {
+    public DbscanClusterer(List<LLResultTypes.DetectorResult> detectorResults, Pose robotPose, double turretAngle) {
         if (detectorResults == null || detectorResults.isEmpty()) {
-            this.clusters = new ArrayList<>();
-            return this.clusters;
+            this.clustersMap = new ArrayList<>();
+            return;
         }
 
         // Filter out results that are not valid balls
@@ -102,8 +75,8 @@ public class ClustersMap {
 
         int n = validBalls.size();
         if (n == 0) {
-            this.clusters = new ArrayList<>();
-            return this.clusters;
+            this.clustersMap = new ArrayList<>();
+            return;
         }
 
         Pose effectiveRobotPose = (robotPose != null) ? robotPose : new Pose(0, 0, 0);
@@ -169,8 +142,7 @@ public class ClustersMap {
             clusterList.add(cluster);
         }
 
-        this.clusters = clusterList;
-        return clusterList;
+        this.clustersMap = clusterList;
     }
 
     private List<Integer> getNeighbors(int ptIndex, Pose[] positions, double eps) {
@@ -186,23 +158,26 @@ public class ClustersMap {
         return neighbors;
     }
 
-    public List<Cluster> getClusters() {
-        return clusters;
-    }
+    /**
+     * Returns the cluster with the best score
+     * @param robotPose Current Pedro Pose of the Robot
+     * @param turretAngle Current turret angle in radians
+     * @return The best Cluster object
+     */
+    public Cluster getBestCluster(Pose robotPose, double turretAngle) {
+        if (clustersMap.isEmpty()) {
+            return null;
+        }
+        Cluster bestCluster = null;
+        double bestScore = -10.0;
+        for (Cluster c : clustersMap) {
+            double score = c.score(ClusterScoring::score, robotPose, turretAngle);
 
-    public double getEps() {
-        return eps;
-    }
-
-    public void setEps(double eps) {
-        this.eps = eps;
-    }
-
-    public int getMinSamples() {
-        return minSamples;
-    }
-
-    public void setMinSamples(int minSamples) {
-        this.minSamples = minSamples;
+            if (score > bestScore) {
+                bestScore = score;
+                bestCluster = c;
+            }
+        }
+        return bestCluster;
     }
 }

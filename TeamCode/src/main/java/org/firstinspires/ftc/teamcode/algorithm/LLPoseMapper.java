@@ -13,6 +13,8 @@ import com.pedropathing.math.Pose;
  * LLPoseMapper is a utility class to handle the various conversions between Limelight and
  * Pedro Coordinate System
  */
+
+// TODO: Test these methods
 public class LLPoseMapper {
     private static final PoseFactory p = PoseFactory.radians();
     /**
@@ -78,7 +80,7 @@ public class LLPoseMapper {
     }
 
     /**
-     * Calculate the Euclidean distance from the robot to the target
+     * Calculate the Euclidean distance from the robot to the target in inches
      * @param robotPose Current Pedro Pathing's Pose of the robot
      * @param targetPose Pose of the target in Pedro Coordinates
      * @return Distance from the robot to the target in inches
@@ -88,7 +90,7 @@ public class LLPoseMapper {
     }
 
     /**
-     * Calculate the Euclidean distance from the robot to the target
+     * Calculate the Euclidean distance from the robot to the target in inches
      * @param robotPose Current Pedro Pathing's Pose of the robot
      * @param tx Limelight object tx coordinate
      * @param ty Limelight object ty coordinate

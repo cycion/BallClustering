@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.structure;
 
-import static org.firstinspires.ftc.teamcode.config.CameraConfig.*;
-
 import com.pedropathing.math.Pose;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 
@@ -128,7 +126,7 @@ public class Cluster {
      */
     public double score(Scorer scorer, Pose robotPose, double turretAngle) {
         double distance = getDistance(robotPose, turretAngle);
-        return scorer.score(pollenCount, redNectarCount, blueNectarCount, distance);
+        return scorer.score(this, robotPose, turretAngle);
     }
 
     public double getArea() {
